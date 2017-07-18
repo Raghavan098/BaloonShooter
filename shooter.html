@@ -1,0 +1,221 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #99e6ff;
+}
+</style>
+<title>
+	Game
+</title>
+</head>
+<body onload="start()">
+</canvas>
+<script>
+var mygamePiece;
+var Bult=null;
+var s_c;
+var baloons=[null,null,null,null];
+var colours=["#1aff1a","#ff0055","#ff1a1a","#ff1aff","#ff6600","#002266"];
+var mygamebaloons;
+var temp = [[null,null],[null,null],[null,null],[null,null],[null,null]];
+function start(){
+  mygameArea.start();
+  mygamePiece = new component(30,30,"#ffff4d",50,300);
+
+  var i;
+  s_c = new score_board(0);
+  var col;
+  var x1;
+  var y1;
+  var j;
+  var rep=10;
+  for(i=0;i<5;i++){
+    col=colours[getRandomInt(0,5)];
+    x1=getRandomInt(475,1100);
+    y1=getRandomInt(100,300);
+    temp[i]=[x1,y1];
+    for(j=i-1;j>=0;j--){
+      if(getDistance(temp[i][0],temp[i][1],temp[j][0],temp[j][1])<50){
+
+        x1=getRandomInt(475,1000);
+        y1=getRandomInt(600,600);
+        temp[i]=[x1,y1];
+        j=i-1;
+      }
+    }
+    rep+=5;
+    baloons[i]=new Bal_obj(x1,y1,rep,col);
+  }
+
+}
+function getDistance(x1,y1,x2,y2){
+  // console.log("%f\n",Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)));
+  return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+}
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+var mygameArea={
+  canvas : document.createElement("canvas"),
+  start: function(){
+    this.canvas.width =1200;
+    this.canvas.height = 800;
+    this.context = this.canvas.getContext("2d");
+    document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+    this.interval = setInterval(updateGameArea, 20);
+    mygameArea.CL=false;
+    mygameArea.XC=false;
+    mygameArea.YC=false;
+    mygameArea.X2=false;
+    mygameArea.Y2=false;
+    mygameArea.bullet_present=false;
+    window.addEventListener('mousedown', function(e){
+
+      mygameArea.XC=e.clientX;
+      mygameArea.YC=e.clientY;
+    })
+    window.addEventListener('mouseup',function(e){
+      mygameArea.X2=e.clientX;
+      mygameArea.Y2=e.clientY;
+      console.log("done\n");
+      mygameArea.bullet_present=true;
+      mygameArea.CL=true;
+
+    })
+  },
+  clear : function() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+function score_board(sco){
+  this.score = sco;
+  this.bul_count=10;
+  this.width= "30px";
+  this.height="Consolas";
+  this.color="black";
+  this.x = 50;
+  this.y = 40;
+  this.text="Score :" + this.score;
+  this.bullet_text="Bullets left: "+this.bul_count;
+  this.text+=("\n" + this.bullet_text);
+  this.update = function(){
+    ctx=mygameArea.context;
+    ctx.font = this.width + " " + this.height;
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.text, this.x, this.y);
+  }
+  this.imp = function(s){
+    this.score+=s;
+    this.text="Score :" + this.score;
+    this.bullet_text="Bullets left: "+this.bul_count;
+    this.text+=("\n" + this.bullet_text);
+  }
+  this.red_bull = function(){
+    this.bul_count-=1;
+    this.text="Score :" + this.score;
+    this.bullet_text="Bullets left: "+this.bul_count;
+    this.text+=("\n" + this.bullet_text);
+  }
+}
+function component(height,width,colour,x,y){
+  this.x=x;
+  this.y=y;
+  this.width=width;
+  this.height=height;
+  this.colour=colour;
+  this.update = function(){
+        ctx = mygameArea.context;
+        ctx.fillStyle = this.colour;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+}
+function bullet_obj(x1,y1,x2,y2){
+  var dist=getDistance(x1,y1,x2,y2);
+  this.x=50;
+  this.y=300;
+  this.x1=x1;
+  this.x2=x2;
+  this.y1=y1;
+  this.y2=y2;
+  this.radius=10;
+  this.gravity=0.05;
+  this.gravityspeed=0;
+  this.speedX=0;
+  this.speedY=0;
+  this.speedX=Math.cos(Math.atan((this.y2-this.y1)/(this.x1-this.x2)))*getDistance(x1,y1,x2,y2)/75;
+  this.speedY=-Math.sin(Math.atan((this.y2-this.y1)/(this.x1-this.x2)))*getDistance(x1,y1,x2,y2)/75;
+  // console.log("%f %f %f",Math.atan((this.y2-this.y1)/(this.x1-this.x2)),Math.cos(Math.atan((this.y2-this.y1)/(this.x1-this.x2)))*2,Math.sin(Math.atan((this.y2-this.y1)/(this.x1-this.x2)))*2);
+  ctx1=mygameArea.context;
+  ctx1.fillStyle="black";
+  ctx1.beginPath();
+  ctx1.arc(this.x,this.y,this.radius,0,2*Math.PI);
+  ctx1.fill();
+  this.update_bullet = function(){
+    ctx1=mygameArea.context;
+    ctx1.fillStyle="black";
+    ctx1.beginPath();
+    ctx1.arc(this.x,this.y,this.radius,0,2*Math.PI);
+    ctx1.fill();
+  }
+  this.newpos_bullet=function(){
+    this.gravityspeed+=this.gravity;
+    this.x+=this.speedX;
+    this.y+=(this.speedY+this.gravityspeed);
+  }
+}
+function Bal_obj(x,y,rad,col){
+  this.x=x;
+  this.y=y;
+  this.radius=rad;
+  this.colour=col;
+  this.update = function(){
+    this.y-=0.85;
+    ctx = mygameArea.context;
+    ctx.fillStyle=this.colour;
+    ctx.beginPath();
+  	ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
+  	ctx.fill();
+    if(this.y<=0){
+      this.y=600;
+    }
+  }
+}
+function updateGameArea(){
+  mygameArea.clear();
+  mygamePiece.update();
+  var i;
+  s_c.update();
+  if(mygameArea.CL){
+    Bult = new bullet_obj(mygameArea.XC,mygameArea.YC,mygameArea.X2,mygameArea.Y2);
+    s_c.red_bull();
+    mygameArea.CL=false;
+  }
+  if(mygameArea.bullet_present){
+    Bult.newpos_bullet();
+    Bult.update_bullet();
+  }
+  var dist;
+  for(i=0;i<5;i++){
+    if(baloons[i]!=null){
+      // dist=getDistance(Bult.x,Bult.y,baloons[i].x,baloons[i].y);
+      baloons[i].update();
+      if(mygameArea.bullet_present){
+        dist=getDistance(Bult.x,Bult.y,baloons[i].x,baloons[i].y);
+        if(dist<=Bult.radius+baloons[i].radius){
+          baloons[i]=null;
+          s_c.imp(100/dist);
+          continue;
+        }
+      }
+
+
+    }
+  }
+}
+</script>
+</body>
+</html>
